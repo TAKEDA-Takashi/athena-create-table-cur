@@ -12,5 +12,9 @@ flake8-import-order = "*"
 boto3 = "*"
 jinja2 = "*"
 
+[scripts]
+lint = "flake8 --show-source ."
+fmt = "autopep8 -ivr ."
+
 [requires]
 python_version = "3.7"
