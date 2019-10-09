@@ -1,0 +1,14 @@
+CREATE EXTERNAL TABLE cur(
+  {%- for column in columns %}
+    {{column.category}}_{{column.name | replace(":", "_")}} STRING{{"," if not loop.last }}
+  {%- endfor %}
+)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+   'separatorChar' = ',',
+   'quoteChar' = '\"',
+   'escapeChar' = '\\'
+)LOCATION '{{s3_cur_dirpath}}'
+TBLPROPERTIES ('has_encrypted_data'='false')
+;
+
