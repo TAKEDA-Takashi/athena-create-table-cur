@@ -38,7 +38,9 @@ def create_ddl(manifest_path, profile_name=None):
 
 
 def __parse_s3path(s3_path):
-    """S3のパスをバケット名とオブジェクトのキーに分ける"""
+    """
+    S3のパスをバケット名とオブジェクトのキーに分ける
+    """
     m = re.match(r's3://(?P<bucket_name>.+?)/(?P<manifest_path>.+)', s3_path)
 
     bucket_name = m.group('bucket_name')
@@ -48,7 +50,9 @@ def __parse_s3path(s3_path):
 
 
 def __get_manifest_data(bucket_name, manifest_path, session):
-    """マニフェストファイルの内容をdictで返す"""
+    """
+    マニフェストファイルの内容をdictで返す
+    """
     s3 = session.client('s3')
 
     object_body = s3.get_object(Bucket=bucket_name, Key=manifest_path)['Body']
@@ -57,7 +61,9 @@ def __get_manifest_data(bucket_name, manifest_path, session):
 
 
 def __get_template(template_name):
-    """DDLのテンプレートを返す"""
+    """
+    DDLのテンプレートを返す
+    """
     env = Environment(loader=FileSystemLoader('.'))
     template = env.get_template(template_name)
     return template
