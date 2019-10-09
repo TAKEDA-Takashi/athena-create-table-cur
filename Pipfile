@@ -4,8 +4,13 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+flake8 = "*"
+autopep8 = "*"
+flake8-import-order = "*"
 
 [packages]
+boto3 = "*"
+jinja2 = "*"
 
 [requires]
 python_version = "3.7"
