@@ -119,7 +119,8 @@ def __get_athena_ddl(session, manifest_path):
 
     create_view_render_params = {
         'table_name': table_name,
-        'view_name': f"v_{table_name}"
+        'view_name': f"v_{table_name}",
+        'columns': manifest_data['columns']
     }
 
     return {

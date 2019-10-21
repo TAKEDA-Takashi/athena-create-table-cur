@@ -1,5 +1,15 @@
 CREATE OR REPLACE VIEW {{view_name}} AS 
-SELECT *
+SELECT
+  {%- for column in columns %}
+    {% set cname = (column.category + '_' + column.name).replace(':', '_') %}
+    {%- if column.type in ['BigDecimal', 'OptionalBigDecimal'] -%}
+      TRY_CAST({{cname}} AS DECIMAL(18, 10)) AS {{cname}}
+    {%- elif column.type == 'DateTime' -%}
+      CAST(from_iso8601_timestamp({{cname}}) AS TIMESTAMP) AS {{cname}}
+    {%- else -%}
+      {{cname}}
+    {%- endif -%}{{',' if not loop.last }}
+  {%- endfor %}
 FROM
   {{table_name}}
 WHERE (("identity_timeinterval" IS NOT NULL) AND ("identity_timeinterval" <> ''))

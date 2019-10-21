@@ -1,6 +1,6 @@
 CREATE EXTERNAL TABLE {{table_name}} (
   {%- for column in columns %}
-    {{column.category}}_{{column.name | replace(":", "_")}} STRING{{"," if not loop.last }}
+    {{column.category}}_{{column.name | replace(':', '_')}} STRING{{',' if not loop.last }}
   {%- endfor %}
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
