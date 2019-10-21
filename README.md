@@ -44,6 +44,12 @@ $ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3
 $ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path} -f
 ```
 
+下記補足情報にあるように、マニフェストファイルの情報もクエリの対象になります。`-v`オプションを付けることでマニフェストファイルの情報を除外したビューを作成します。
+
+```bash
+$ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path} -v
+```
+
 ## 補足情報
 
 CURが出力されているパスにマニフェストファイルが保存されている場合、マニフェストファイル自体もAthenaクエリの対象となります。これは2019-10-11現在でAthenaの仕様です。
