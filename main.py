@@ -4,6 +4,7 @@ S3に保存されているCURマニフェストファイルからAthenaテーブ
 """
 import json
 import re
+import time
 from pathlib import Path
 
 import boto3
@@ -11,6 +12,7 @@ import boto3
 from jinja2 import Environment, FileSystemLoader
 
 TEMPLATE_NAME_CREATE_TABLE = 'template/ddl_create_table.hql.j2'
+TEMPLATE_NAME_DROP_TABLE = 'template/ddl_drop_table.hql.j2'
 
 
 def __print_query(session, args):
@@ -25,9 +27,9 @@ def __print_query(session, args):
         args.manifest
             マニフェストファイルのS3パス
     """
-    ddl = __get_create_table_ddl(session, args.manifest)
+    ddl = __get_athena_ddl(session, args.manifest)
 
-    print(ddl)
+    print(ddl['create_table'])
 
 
 def __execute_athena_query(session, args):
@@ -44,35 +46,69 @@ def __execute_athena_query(session, args):
         args.output
             Athenaクエリ結果格納先のS3パス
     """
-    ddl = __get_create_table_ddl(session, args.manifest)
+    ddl = __get_athena_ddl(session, args.manifest)
     athena = session.client('athena')
-    athena.start_query_execution(
-        QueryString=ddl,
+
+    if args.force:
+        response = athena.start_query_execution(
+            QueryString=ddl['drop_table'],
+            ResultConfiguration={
+                'OutputLocation': args.output
+            })
+        result = __get_athena_query_result(athena, response['QueryExecutionId'])
+        print('DROP TABLE:', result)
+
+    response = athena.start_query_execution(
+        QueryString=ddl['create_table'],
         ResultConfiguration={
             'OutputLocation': args.output
         })
 
+    result = __get_athena_query_result(athena, response['QueryExecutionId'])
+    print('CREATE TABLE:', result)
 
-def __get_create_table_ddl(session, manifest_path):
+
+def __get_athena_query_result(athena, execution_id):
+    """
+    指定したIDの結果を取得する。実行が完了するまで5秒間隔でポーリングする。
+    """
+    while True:
+        stats = athena.get_query_execution(QueryExecutionId=execution_id)
+        status = stats['QueryExecution']['Status']['State']
+        if status in ['SUCCEEDED', 'FAILED', 'CANCELLED']:
+            return status
+        time.sleep(5)
+
+
+def __get_athena_ddl(session, manifest_path):
     """
     CURのマニフェストファイルからAthena用のDDLを作成する。
     """
     bucket_name, manifest_path = __parse_s3path(manifest_path)
 
     manifest_data = __get_manifest_data(session, bucket_name, manifest_path)
-    template = __get_template(TEMPLATE_NAME_CREATE_TABLE)
+
+    drop_template = __get_template(TEMPLATE_NAME_DROP_TABLE)
+    create_template = __get_template(TEMPLATE_NAME_CREATE_TABLE)
 
     cur_dirpath = Path(manifest_path).parent
     s3_cur_dirpath = f"s3://{bucket_name}/{cur_dirpath}/{manifest_data['assemblyId']}/"
+    table_name = f"cur_{manifest_data['billingPeriod']['start'][:8]}_{manifest_data['billingPeriod']['end'][:8]}"
 
-    render_params = {
-        'table_name': f"cur_{manifest_data['billingPeriod']['start'][:8]}_{manifest_data['billingPeriod']['end'][:8]}",
+    drop_render_params = {
+        'table_name': table_name
+    }
+
+    create_render_params = {
+        'table_name': table_name,
         's3_cur_dirpath': s3_cur_dirpath,
         'columns': manifest_data['columns']
     }
-    ddl_sql = template.render(**render_params)
 
-    return ddl_sql
+    return {
+        'drop_table': drop_template.render(**drop_render_params),
+        'create_table': create_template.render(**create_render_params)
+    }
 
 
 def __parse_s3path(s3_path):
@@ -123,6 +159,7 @@ if __name__ == '__main__':
 
     parser_athena = subparsers.add_parser('athena', help='create table for athena mode')
     parser_athena.add_argument('--output', '-o', required=True, help='athena query output S3 path')
+    parser_athena.add_argument('--force', '-f', action='store_true', help='create table after drop table')
     parser_athena.set_defaults(func=__execute_athena_query)
 
     parser_print = subparsers.add_parser('print', help='output to stdout mode')

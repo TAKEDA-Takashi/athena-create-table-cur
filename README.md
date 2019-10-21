@@ -38,6 +38,12 @@ AthenaにDDLを実行します。Athenaクエリの結果保存用のS3パスを
 $ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path}
 ```
 
+すでにテーブルが存在する場合は、`-f`オプションを付けることで再作成します。
+
+```bash
+$ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path} -f
+```
+
 ## 補足情報
 
 CURが出力されているパスにマニフェストファイルが保存されている場合、マニフェストファイル自体もAthenaクエリの対象となります。これは2019-10-11現在でAthenaの仕様です。
