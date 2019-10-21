@@ -10,7 +10,7 @@ import boto3
 
 from jinja2 import Environment, FileSystemLoader
 
-TEMPLATE_NAME = 'template/ddl.hql.j2'
+TEMPLATE_NAME_CREATE_TABLE = 'template/ddl_create_table.hql.j2'
 
 
 def __print_query(session, args):
@@ -25,7 +25,7 @@ def __print_query(session, args):
         args.manifest
             マニフェストファイルのS3パス
     """
-    ddl = __create_ddl(session, args.manifest)
+    ddl = __get_create_table_ddl(session, args.manifest)
 
     print(ddl)
 
@@ -44,7 +44,7 @@ def __execute_athena_query(session, args):
         args.output
             Athenaクエリ結果格納先のS3パス
     """
-    ddl = __create_ddl(session, args.manifest)
+    ddl = __get_create_table_ddl(session, args.manifest)
     athena = session.client('athena')
     athena.start_query_execution(
         QueryString=ddl,
@@ -53,14 +53,14 @@ def __execute_athena_query(session, args):
         })
 
 
-def __create_ddl(session, manifest_path):
+def __get_create_table_ddl(session, manifest_path):
     """
     CURのマニフェストファイルからAthena用のDDLを作成する。
     """
     bucket_name, manifest_path = __parse_s3path(manifest_path)
 
     manifest_data = __get_manifest_data(session, bucket_name, manifest_path)
-    template = __get_template(TEMPLATE_NAME)
+    template = __get_template(TEMPLATE_NAME_CREATE_TABLE)
 
     cur_dirpath = Path(manifest_path).parent
     s3_cur_dirpath = f"s3://{bucket_name}/{cur_dirpath}/{manifest_data['assemblyId']}/"
