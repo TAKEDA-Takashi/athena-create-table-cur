@@ -12,6 +12,7 @@ import boto3
 from jinja2 import Environment, FileSystemLoader
 
 TEMPLATE_NAME_CREATE_TABLE = 'template/ddl_create_table.hql.j2'
+TEMPLATE_NAME_CREATE_VIEW = 'template/ddl_create_view.hql.j2'
 TEMPLATE_NAME_DROP_TABLE = 'template/ddl_drop_table.hql.j2'
 
 
@@ -67,6 +68,16 @@ def __execute_athena_query(session, args):
     result = __get_athena_query_result(athena, response['QueryExecutionId'])
     print('CREATE TABLE:', result)
 
+    if args.view:
+        response = athena.start_query_execution(
+            QueryString=ddl['create_view'],
+            ResultConfiguration={
+                'OutputLocation': args.output
+            })
+
+        result = __get_athena_query_result(athena, response['QueryExecutionId'])
+        print('CREATE VIEW:', result)
+
 
 def __get_athena_query_result(athena, execution_id):
     """
@@ -88,26 +99,33 @@ def __get_athena_ddl(session, manifest_path):
 
     manifest_data = __get_manifest_data(session, bucket_name, manifest_path)
 
-    drop_template = __get_template(TEMPLATE_NAME_DROP_TABLE)
-    create_template = __get_template(TEMPLATE_NAME_CREATE_TABLE)
+    drop_table_template = __get_template(TEMPLATE_NAME_DROP_TABLE)
+    create_table_template = __get_template(TEMPLATE_NAME_CREATE_TABLE)
+    create_view_template = __get_template(TEMPLATE_NAME_CREATE_VIEW)
 
     cur_dirpath = Path(manifest_path).parent
     s3_cur_dirpath = f"s3://{bucket_name}/{cur_dirpath}/{manifest_data['assemblyId']}/"
     table_name = f"cur_{manifest_data['billingPeriod']['start'][:8]}_{manifest_data['billingPeriod']['end'][:8]}"
 
-    drop_render_params = {
+    drop_table_render_params = {
         'table_name': table_name
     }
 
-    create_render_params = {
+    create_table_render_params = {
         'table_name': table_name,
         's3_cur_dirpath': s3_cur_dirpath,
         'columns': manifest_data['columns']
     }
 
+    create_view_render_params = {
+        'table_name': table_name,
+        'view_name': f"v_{table_name}"
+    }
+
     return {
-        'drop_table': drop_template.render(**drop_render_params),
-        'create_table': create_template.render(**create_render_params)
+        'drop_table': drop_table_template.render(**drop_table_render_params),
+        'create_table': create_table_template.render(**create_table_render_params),
+        'create_view': create_view_template.render(**create_view_render_params)
     }
 
 
@@ -159,6 +177,7 @@ if __name__ == '__main__':
 
     parser_athena = subparsers.add_parser('athena', help='create table for athena mode')
     parser_athena.add_argument('-o', '--output', required=True, help='athena query output S3 path')
+    parser_athena.add_argument('-v', '--view', action='store_true', help='create view')
     parser_athena.add_argument('-f', '--force', action='store_true', help='create table after drop table')
     parser_athena.set_defaults(func=__execute_athena_query)
 
