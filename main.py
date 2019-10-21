@@ -150,16 +150,16 @@ if __name__ == '__main__':
         description='CURのマニフェストファイルからAthena用のDDLを作成する',
         allow_abbrev=False)
 
-    parser.add_argument('--profile', help='AWS CLI profile (default: default)')
-    parser.add_argument('--manifest', '-m', required=True, help='S3 path for CUR Manifest file')
+    parser.add_argument('-p', '--profile', help='AWS CLI profile (default: default)')
+    parser.add_argument('-m', '--manifest', required=True, help='S3 path for CUR Manifest file')
 
     parser.set_defaults(func=__print_query)
 
     subparsers = parser.add_subparsers()
 
     parser_athena = subparsers.add_parser('athena', help='create table for athena mode')
-    parser_athena.add_argument('--output', '-o', required=True, help='athena query output S3 path')
-    parser_athena.add_argument('--force', '-f', action='store_true', help='create table after drop table')
+    parser_athena.add_argument('-o', '--output', required=True, help='athena query output S3 path')
+    parser_athena.add_argument('-f', '--force', action='store_true', help='create table after drop table')
     parser_athena.set_defaults(func=__execute_athena_query)
 
     parser_print = subparsers.add_parser('print', help='output to stdout mode')
