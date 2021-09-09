@@ -12,5 +12,6 @@ SELECT
   {%- endfor %}
 FROM
   {{table_name}}
-WHERE (("identity_timeinterval" IS NOT NULL) AND ("identity_timeinterval" <> ''))
+WHERE
+  "$path" NOT LIKE '%.json'
 ;
