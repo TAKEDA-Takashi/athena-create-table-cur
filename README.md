@@ -60,6 +60,6 @@ https://docs.aws.amazon.com/ja_jp/athena/latest/ug/tables-location-format.html
 
 ```sql
 SELECT * FROM cur_table_name
-WHERE identity_timeinterval IS NOT NULL AND identity_timeinterval <> ''
+WHERE "$path" NOT LIKE '%.json'
 LIMIT 10;
 ```
