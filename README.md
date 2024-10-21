@@ -10,24 +10,24 @@ S3に保存されているCURマニフェストファイルからAthenaテーブ
 ## 事前準備
 
 ```bash
-$ pip3 install pipenv
-$ pipenv install
+$ pip3 install uv
+$ uv sync
 ```
 
 ## 実行方法
 
-ヘルプについては`pipenv run python main.py -h`または`pipenv run python main.py athena -h`などで確認できます。各モードでマニフェストファイルを指定しますが、トップレベルのマニフェストのパスを指定してください。自動的に最新のassemblyIdを対象としたDDLを生成します。
+ヘルプについては`uv run main.py -h`または`uv run main.py athena -h`などで確認できます。各モードでマニフェストファイルを指定しますが、トップレベルのマニフェストのパスを指定してください。自動的に最新のassemblyIdを対象としたDDLを生成します。
 
 ### printモード
 
 標準出力にDDLを出力します。ファイルに保存などをしたい場合はリダイレクトなどで保存してください。
 
 ```bash
-$ pipenv run python main.py -m s3://${your_bucket}/${manifest_path}
+$ uv run main.py -m s3://${your_bucket}/${manifest_path}
 
 or
 
-$ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} print
+$ uv run main.py -m s3://${your_bucket}/${manifest_path} print
 ```
 
 ### athenaモード
@@ -35,19 +35,19 @@ $ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} print
 AthenaにDDLを実行します。Athenaクエリの結果保存用のS3パスを指定する必要があります。
 
 ```bash
-$ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path}
+$ uv run main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path}
 ```
 
 すでにテーブルが存在する場合は、`-f`オプションを付けることで再作成します。
 
 ```bash
-$ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path} -f
+$ uv run main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path} -f
 ```
 
 下記補足情報にあるように、マニフェストファイルの情報もクエリの対象になります。`-v`オプションを付けることでマニフェストファイルの情報を除外したビューを作成します。
 
 ```bash
-$ pipenv run python main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path} -v
+$ uv run main.py -m s3://${your_bucket}/${manifest_path} athena -o s3://${your_bucket}/${output_path} -v
 ```
 
 ## 補足情報
